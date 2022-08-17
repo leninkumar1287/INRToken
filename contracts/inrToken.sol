@@ -2,65 +2,52 @@ pragma solidity^0.8.15;
 
 import "./ERC20.sol";
 
-contract inrToken {
+contract inrToken is ERC20 {
     address addressOfAnotherContract;
-    address public admin = msg.sender;
+    address adminOftheContract = msg.sender;
     uint public increaseCoin;
 
-    modifier restriction(address own){
-        if(true){
-            require(msg.sender == own);
-        }
-        else {
-            revert();
-            }
+    modifier onlyAdmin(address own){
+        require(adminOftheContract == own, "Only admin can do this operation");
         _;
     }
-
-    function setAddress(address _address) external {
-        addressOfAnotherContract = _address;
+    function coinName() view public returns(string memory){
+        return tokenName();
     }
-
-    function pointer() view internal returns(ERC20 Pointer){
-        Pointer = ERC20(addressOfAnotherContract);
-        return Pointer;
+    function symbolOfToken() view public returns(string memory){
+        return tokenSymbol();
     }
-
-    function addNewCoin(uint newCoin) public restriction(msg.sender){
+    function addNewCoin(uint newCoin) public onlyAdmin(msg.sender){
         increaseCoin += newCoin;
+        mintNewINRToken(newCoin);
     }
 
-    function mintNewINRToken(uint amount) public restriction(msg.sender) {
-        uint oldCoin = pointer().getCoin();
-        uint newlyAddedCoin = oldCoin += amount;
+    function mintNewINRToken(uint amount) internal {
+        uint oldCoin = getCoin();
+        oldCoin += amount;
         require(increaseCoin >= oldCoin," there is no new coin added ");
-        require(increaseCoin >= newlyAddedCoin || increaseCoin == newlyAddedCoin , " you were trying to mint extra token");
-        pointer().addCoin(amount);
-        pointer().mint(amount);
+        require(increaseCoin >= oldCoin || increaseCoin == oldCoin , " you were trying to mint extra token");
+        mint(amount);
     }
 
     function Coin() view external returns(uint){
-        return pointer().getCoin();
+        return getCoin();
     }
 
     function totalINRtoken() view external returns(uint){
-        return pointer().viewTotalSUpply();
+        return viewTotalSUpply();
     }
 
-    function removeINR(uint amount) external restriction(msg.sender){
-        pointer().burn(amount);
-        pointer().removeCoin(amount);
+    function removeINR(uint amount) public onlyAdmin(msg.sender){
+        burn(amount);
+        removeCoin(amount);
     }
 
-    function balanceOfAccount(address addressOfAccount) view external returns(uint){
-        return pointer().balanceOf(addressOfAccount);
+    function transferToken(address recipient, uint amount) public onlyAdmin(msg.sender) {
+        transfer(recipient, amount);
     }
 
-    function transfer(address recipient, uint amount) public restriction(msg.sender) {
-        pointer().transfer(recipient, amount);
-    }
-
-    function transferFrom(address from,address recipient, uint amount) public restriction(msg.sender) {
-        pointer().transferFrom(from,recipient, amount);
+    function transferTokenFrom(address from,address recipient, uint amount) public onlyAdmin(msg.sender) {
+        transferFrom(from,recipient, amount);
     }
 }
